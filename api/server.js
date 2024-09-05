@@ -1,9 +1,19 @@
 const express = require('express');
 const server = express();
 
-// Configure your server here
-// Build your actions router in /api/actions/actions-router.js
-// Build your projects router in /api/projects/projects-router.js
-// Do NOT `server.listen()` inside this file!
+const actionsRouter = require('../api/actions/actions-router');
+const projectRouter = require('../api/projects/projects-router');
+
+const cors = require('cors');
+server.use(cors()); 
+
+const { logger } = require('./projects/projects-middleware');
+const { validateProject, validateProjectId } = require('./projects/projects-middleware');
+const { validateAction } = require('./actions/actions-middlware');
+
+server.use(express.json()); 
+server.use(logger); 
+server.use('/api/projects', projectRouter);
+server.use('/api/actions', actionsRouter);
 
 module.exports = server;
