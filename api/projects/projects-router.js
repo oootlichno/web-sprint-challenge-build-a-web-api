@@ -27,9 +27,11 @@ router.get('/:id', validateProjectId, async (req, res) => {
 
 router.post('/', validateProject, async (req, res, next) => {
     try {
+        const { name, description, completed = false } = req.body; 
         const newProject = await Project.insert({
-            name: req.body.name,
-            description: req.body.description
+            name,
+            description,
+            completed  
         });
         res.status(201).json(newProject);
     } catch (err) {
@@ -39,14 +41,17 @@ router.post('/', validateProject, async (req, res, next) => {
 
 router.put('/:id', validateProject, validateProjectId, async (req, res, next) => {
     try {
-        const rowsChanged = await Project.update(req.params.id, {
-            name: req.body.name,
-            description: req.body.description
-        });
-        if (rowsChanged === 0) {
+        const { name, description, completed } = req.body;
+
+        if (name === undefined || description === undefined || completed === undefined) {
+            return res.status(400).json({ message: "Missing required fields: name, description, or completed" });
+        }
+
+        const updatedProject = await Project.update(req.params.id, { name, description, completed });
+        if (!updatedProject) {
             return res.status(404).json({ message: "Project not found" });
         }
-        const updatedProject = await Project.getById(req.params.id);
+
         res.json(updatedProject);
     } catch (err) {
         next(err);
@@ -64,6 +69,21 @@ router.delete('/:id', validateProjectId, async (req, res, next) => {
         next(err);
     }
 });
+
+router.get('/:id/actions', validateProjectId, async (req, res, next) => {
+    const projectId = req.params.id; 
+    try {
+        const actions = await Project.getProjectActions(projectId); 
+        if (actions.length > 0) {
+            res.status(200).json(actions);
+        } else {
+            res.status(404).json([]); 
+        }
+    } catch (err) {
+        next(err); 
+    }
+});
+
 
 module.exports = router; 
 

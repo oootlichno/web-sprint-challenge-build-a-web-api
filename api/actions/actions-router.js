@@ -1,13 +1,12 @@
 const express = require("express");
 
-const {
-    validateAction
-} = require("./actions-middlware");
+const {validateAction} = require("./actions-middlware");
 
 const Action = require('./actions-model');
 const Project = require('../projects/projects-model'); 
 
 const router = express.Router();
+
 
 router.get('/', async (req, res, next) => { 
     try {
@@ -18,15 +17,15 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-router.get('/:id', validateAction, async (req, res, next) => { 
+
+router.get('/:id', validateAction, async (req, res, next) => {
     try {
-        const action = await Action.getById(req.params.id);
-        if (!action) {
-            return res.status(404).json({
-                message: "Action not found",
-            });
+        const action = await Action.get(req.params.id); 
+        if (action) {
+            res.status(200).json(action);
+        } else {
+            res.status(404).json({ message: 'Action not found' }); 
         }
-        res.json(action);
     } catch (err) {
         next(err);
     }
@@ -61,7 +60,7 @@ router.post('/', async (req, res, next) => {
     }
 });
 
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', validateAction, async (req, res, next) => {
     try {
         const { id } = req.params;
         const { project_id, description, notes, completed } = req.body;
@@ -69,13 +68,6 @@ router.put('/:id', async (req, res, next) => {
         if (!project_id || !description || !description.trim() || !notes || !notes.trim()) {
             return res.status(400).json({
                 message: "Missing required fields: project_id, description, and/or notes",
-            });
-        }
-
-        const action = await Action.getById(id);
-        if (!action) {
-            return res.status(404).json({
-                message: "Action not found",
             });
         }
 
@@ -98,7 +90,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', validateAction, async (req, res, next) => {
     try {
         const { id } = req.params;
 
